@@ -321,65 +321,66 @@ export function TrainingDashboard() {
   // Help Modal Component
   const HelpModal = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="border-none shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <Card className="border-none shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-slate-900 text-2xl">Help & Tutorial</CardTitle>
-          <button
-            onClick={() => setShowHelp(false)}
-            className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <X className="h-6 w-6 text-slate-600" />
-          </button>
+          <CardTitle className="text-slate-900"><strong>Help & Info</strong></CardTitle>
+            <button
+              onClick={() => setShowHelp(false)}
+              className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <X className="h-6 w-6 text-slate-600" />
+            </button>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* How to Connect Section */}
           <div>
-            <h3 className="text-slate-900 font-semibold text-lg mb-2">Getting Started: <strong>Connect</strong> the Microcontroller</h3>
+            <h3 className="text-slate-900 font-semibold text-lg mb-2">Getting Started: <strong>Connect</strong> the <strong>VeniSmart Training Kit</strong></h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
               <p>
                 Follow these steps to connect your microcontroller:
               </p>
               <ol className="list-decimal list-inside space-y-2 ml-2">
-                <li>  ● Plug in your ESP32 microcontroller to a USB port on your computer</li>
-                <li>  ● Click the <strong>"Connect Serial"</strong> button in the interface</li>
-                <li>  ● Select your device from the list that appears</li>
-                <li>  ● Wait for the connection indicator to show <strong>"● Connected"</strong></li>
+                <li>  ➤ Plug in the USB cable into a USB port on your computer.</li>
+                <li>
+                  ➤ Click the {' '}
+                  <button
+                    disabled={serialConnected}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200
+                      ${serialConnected
+                        ? 'bg-gray-200 text-slate-600 cursor-not-allowed'
+                        : 'bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white shadow-cyan-300/40'
+                      }`}
+                  >
+                    Connect Serial
+                  </button> button.
+                </li>
+                <li>  ➤ Select your device from the list that appears.</li>
+                <li>  ➤ Wait for the connection indicator to show <strong>"● Connected"</strong></li>
               </ol>
-              <p className="text-sm italic">
-                🎯 Add pictures or diagrams here to show the physical connection process.
-              </p>
             </div>
           </div>
 
           {/* Interface Walkthrough Section */}
-          <div>
-            <h3 className="text-slate-900 font-semibold text-lg mb-2">How the Interface Works</h3>
+          <div className="border-t pt-6">
+            <h3 className="text-slate-900 font-semibold text-lg mb-2">How does the Interface work?</h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
               <p>
                 Once connected, the interface will guide you through training steps:
               </p>
-              <ul className="list-disc list-inside space-y-2 ml-2">
-                <li><strong>Procedure Sidebar:</strong> Follow the numbered steps on the left. Click to complete or use the buttons to skip/mark as failed.</li>
-                <li><strong>Real-time Monitoring:</strong> Watch the angle and pressure graphs update in real-time as you practice.</li>
-                <li><strong>Current Angle Display:</strong> Keep your angle within the green zone (15°–30°) for optimal performance.</li>
-                <li><strong>Session Stats:</strong> Track your duration, angle range, and pressure readings throughout the session.</li>
-                <li><strong>Serial Output:</strong> View raw data from the microcontroller (for debugging).</li>
-              </ul>
-              <p className="text-sm italic">
-                📝 Add more detailed instructions or screenshots here explaining each component.
-              </p>
+              <li><strong>Procedure Sidebar:</strong> Follow the numbered steps on the left. Click to complete or use the buttons to skip/mark as failed.</li>
+              <li><strong>Real-time Monitoring:</strong> Watch the angle and pressure graphs update in real-time as you practice.</li>
+              <li><strong>Current Angle Display:</strong> Keep your angle within the green zone (15°–30°) for optimal performance.</li>
+              <li><strong>Session Stats:</strong> Track your duration, angle range, and pressure readings throughout the session.</li>
             </div>
           </div>
 
           {/* Session Controls Section */}
-          <div>
+          <div className="border-t pt-6">
             <h3 className="text-slate-900 font-semibold text-lg mb-2">Session Controls</h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
-              <ul className="list-disc list-inside space-y-2 ml-2">
-                <li><strong>Start/Pause:</strong> Begin recording data or pause the session without resetting.</li>
-                <li><strong>Reset:</strong> Clear all data and restart from step 1.</li>
-                <li><strong>View Report:</strong> Once all steps are completed, view your performance summary.</li>
-              </ul>
+              <li><strong>Start/Pause:</strong> Begin recording data or pause the session without resetting.</li>
+              <li><strong>Reset:</strong> Clear all data and restart from step 1.</li>
+              <li><strong>View Report:</strong> Once all steps are completed, view your performance summary.</li>
             </div>
           </div>
 
@@ -387,29 +388,10 @@ export function TrainingDashboard() {
           <div className="border-t pt-6">
             <h3 className="text-slate-900 font-semibold text-lg mb-2">About This Interface</h3>
             <div className="bg-gradient-to-br from-violet-50 to-cyan-50 rounded-lg p-4 space-y-2 text-slate-700">
-              <p>
-                <strong>Project:</strong> VeniSmart Training Kit
-              </p>
-              <p>
-                <strong>Purpose:</strong> A medical training interface designed to help practitioners master intravenous (IV) insertion techniques through real-time feedback and performance monitoring.
-              </p>
-              <p>
-                <strong>Credits:</strong> Developed for the HEE (Health Education England) Interface project.
-              </p>
-              <p className="text-sm italic">
-                ✍️ Add your team information, institution, and project details here.
-              </p>
+              <li><strong>Project:</strong> VeniSmart Training Kit</li>
+              <li><strong>Purpose:</strong> A medical training device designed to help medical students master intravenous (IV) insertion techniques through real-time feedback and performance monitoring.</li>
+              <li><strong>Credits:</strong> Developed by Bas, Bjorn, Brent and Giofka for the HEE (Health Engineering Expierience) course, by KU Leuven.</li>
             </div>
-          </div>
-
-          {/* Close Button */}
-          <div className="flex justify-end pt-4 border-t">
-            <Button
-              onClick={() => setShowHelp(false)}
-              className="bg-violet-600 hover:bg-violet-700"
-            >
-              Close
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -420,7 +402,6 @@ export function TrainingDashboard() {
   if (showReport) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-        {showHelp && <HelpModal />}
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-slate-900 text-4xl">Performance Report</h1>
@@ -429,7 +410,7 @@ export function TrainingDashboard() {
               <button
                 onClick={() => setShowHelp(true)}
                 className="p-2 hover:bg-white rounded-lg transition-colors shadow"
-                title="Help & Tutorial"
+                title="Help & Info"
               >
                 <HelpCircle className="h-6 w-6 text-violet-600" />
               </button>
@@ -563,9 +544,13 @@ export function TrainingDashboard() {
     );
   }
 
+  if (showHelp) {
+    return <HelpModal />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
-      {showHelp && <HelpModal />}
+      {/* {showHelp && <HelpModal />} */}
       <div className="max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -575,7 +560,7 @@ export function TrainingDashboard() {
             <button
               onClick={() => setShowHelp(true)}
               className="p-2 hover:bg-white rounded-lg transition-colors shadow"
-              title="Help & Tutorial"
+              title="Help & Info"
             >
               <HelpCircle className="h-6 w-6 text-violet-600" />
             </button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card } from './ui/card';
-import { CheckCircle2, Circle, AlertCircle, X, Check } from 'lucide-react';
+import { CheckCircle2, Circle, AlertCircle, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 
@@ -286,6 +286,13 @@ export function ProcedureSidebar({
                     <p className="text-slate-700 break-words">
                       {step.title}
                     </p>
+                  </div>
+                  <div className="flex-shrink-0 ml-2">
+                    {expandedSteps.has(step.id) ? (
+                      <ChevronUp className="h-5 w-5 text-slate-500" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-slate-500" />
+                    )}
                   </div>
                 </div>
 
