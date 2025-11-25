@@ -406,28 +406,12 @@ export function TrainingDashboard() {
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-slate-900 text-4xl">Performance Report</h1>
             <div className="flex gap-2 items-center">
-              {/* Help Button */}
-              <button
-                onClick={() => setShowHelp(true)}
-                className="p-2 hover:bg-white rounded-lg transition-colors shadow"
-                title="Help & Info"
-              >
-                <HelpCircle className="h-6 w-6 text-violet-600" />
-              </button>
               <Button
                 onClick={() => setShowReport(false)}
                 variant="outline"
                 className="flex items-center gap-2"
               >
                 Back to Training
-              </Button>
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Reset
               </Button>
             </div>
           </div>
@@ -478,7 +462,7 @@ export function TrainingDashboard() {
                     <div className="flex items-baseline gap-2">
                       <span className="text-white">{averageScore}%</span>
                     </div>
-                    <p className="text-white/80">+5.2% from last month</p>
+                    <p className="text-white/80">+0.0% from last month</p>
                   </div>
                 </div>
 
