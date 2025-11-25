@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Activity, BarChart3, TrendingUp, Target, RotateCcw, FileText, User, Play, Pause, HelpCircle, X } from 'lucide-react';
+import { Activity, BarChart3, TrendingUp, Target, RotateCcw, FileText, User, Play, Pause, HelpCircle, X, Italic } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useMemo } from 'react';
 import { ProcedureSidebar } from './ProcedureSidebar';
@@ -10,6 +10,7 @@ import { useRef } from 'react';
 
 const POINTS_PER_SECOND = 10;
 const WINDOW_SIZE = POINTS_PER_SECOND * 10; // 10 seconds of data
+const SIDEBAR_WIDTH = '500px'; // Change this value to adjust sidebar width
 
 // Mock data voor de grafiek
 // const generateMockData = () => {
@@ -320,8 +321,14 @@ export function TrainingDashboard() {
 
   // Help Modal Component
   const HelpModal = () => (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="border-none shadow-lg">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={() => setShowHelp(false)}
+    >
+      <Card
+        className="border-none shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-slate-900"><strong>Help & Info</strong></CardTitle>
             <button
@@ -331,10 +338,29 @@ export function TrainingDashboard() {
               <X className="h-6 w-6 text-slate-600" />
             </button>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <div>
+          <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700 text-lg">
+            <ol className="list-decimal list-inside space-y-2 ml-2">
+              <li>This interface is part of the <i>VeniSmart Training Kit</i>, a venipuncture 
+              training device designed to support medical students as they begin learning 
+              intravenous insertion from a safe home environment. It provides reliable feedback 
+              to help you build confidence and improve your technique. </li>
+              <li>
+              You can use this tool however you prefer. The steps for the procedure are listed
+              on the left, and you may also practise insertion angle and pressure freely using 
+              the graphs and visual indicators on the phantom model.
+              </li>
+              <li>Disclaimer: This training kit is intended for educational purposes only and should not be used for 
+              actual medical procedures. Always follow proper medical guidelines and protocols when performing venipuncture on patients.</li>
+
+            </ol>
+          </div>
+        </div>
+        
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
           {/* How to Connect Section */}
           <div>
-            <h3 className="text-slate-900 font-semibold text-lg mb-2">Getting Started: <strong>Connect</strong> the <strong>VeniSmart Training Kit</strong></h3>
+            <h3 className="text-slate-900 font-semibold text-lg mb-2"><strong>Getting Started: Connect the VeniSmart Training Kit</strong></h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
               <p>
                 Follow these steps to connect your microcontroller:
@@ -361,22 +387,24 @@ export function TrainingDashboard() {
           </div>
 
           {/* Interface Walkthrough Section */}
-          <div className="border-t pt-6">
-            <h3 className="text-slate-900 font-semibold text-lg mb-2">How does the Interface work?</h3>
+          <div>
+            <h3 className="text-slate-900 font-semibold text-lg mb-2"><strong>How does the Interface work?</strong></h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
               <p>
                 Once connected, the interface will guide you through training steps:
               </p>
-              <li><strong>Procedure Sidebar:</strong> Follow the numbered steps on the left. Click to complete or use the buttons to skip/mark as failed.</li>
-              <li><strong>Real-time Monitoring:</strong> Watch the angle and pressure graphs update in real-time as you practice.</li>
-              <li><strong>Current Angle Display:</strong> Keep your angle within the green zone (15°–30°) for optimal performance.</li>
-              <li><strong>Session Stats:</strong> Track your duration, angle range, and pressure readings throughout the session.</li>
+              <ol>
+                <li>➤ <strong>Procedure Sidebar:</strong> Follow the numbered steps on the left. Click to complete or failed.</li>
+                <li>➤ <strong>Real-time Monitoring:</strong> Watch the angle and pressure graphs update in real-time as you practice.</li>
+                <li>➤ <strong>Vein insertion:</strong> When the vein has been pierced, an LED indicator will light up.</li>
+                <li>➤ <strong>Session Stats:</strong> Track your duration, angle range, and pressure readings throughout the session.</li>
+              </ol>
             </div>
           </div>
 
           {/* Session Controls Section */}
-          <div className="border-t pt-6">
-            <h3 className="text-slate-900 font-semibold text-lg mb-2">Session Controls</h3>
+          <div>
+            <h3 className="text-slate-900 font-semibold text-lg mb-2"><strong>Session Controls</strong></h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
               <li><strong>Start/Pause:</strong> Begin recording data or pause the session without resetting.</li>
               <li><strong>Reset:</strong> Clear all data and restart from step 1.</li>
@@ -385,11 +413,11 @@ export function TrainingDashboard() {
           </div>
 
           {/* About Section */}
-          <div className="border-t pt-6">
-            <h3 className="text-slate-900 font-semibold text-lg mb-2">About This Interface</h3>
+          <div>
+            <h3 className="text-slate-900 font-semibold text-lg mb-2"><strong>About This Interface</strong></h3>
             <div className="bg-gradient-to-br from-violet-50 to-cyan-50 rounded-lg p-4 space-y-2 text-slate-700">
               <li><strong>Project:</strong> VeniSmart Training Kit</li>
-              <li><strong>Purpose:</strong> A medical training device designed to help medical students master intravenous (IV) insertion techniques through real-time feedback and performance monitoring.</li>
+              <li><strong>Purpose:</strong> A medical training device designed to help medical students practice intravenous (IV) insertion techniques through real-time feedback and performance monitoring.</li>
               <li><strong>Credits:</strong> Developed by Bas, Bjorn, Brent and Giofka for the HEE (Health Engineering Expierience) course, by KU Leuven.</li>
             </div>
           </div>
@@ -540,14 +568,7 @@ export function TrainingDashboard() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-slate-900 text-4xl">VeniSmart Training Kit</h1>
           <div className="flex gap-2 items-center">
-            {/* Help Button */}
-            <button
-              onClick={() => setShowHelp(true)}
-              className="p-2 hover:bg-white rounded-lg transition-colors shadow"
-              title="Help & Info"
-            >
-              <HelpCircle className="h-6 w-6 text-violet-600" />
-            </button>
+            {/* Repoet Button */}
             {allStepsProcessed && (
               <Button
                 onClick={() => setShowReport(true)}
@@ -557,6 +578,7 @@ export function TrainingDashboard() {
                 View Report
               </Button>
             )}
+            {/* Reset Button */}
             <Button
               onClick={resetSession}
                 variant="outline"
@@ -564,6 +586,14 @@ export function TrainingDashboard() {
               >
               <RotateCcw className="h-4 w-4" />
               Reset
+            </Button>
+            {/* Help Button */}
+            <Button
+              onClick={() => setShowHelp(true)}
+              className="flex items-center gap-2"
+            >
+              <HelpCircle className="h-6 w-6 text-violet-600" />
+              Help & Info
             </Button>
           </div>
         </div>
@@ -611,7 +641,7 @@ export function TrainingDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
+        <div className="grid grid-cols-1 gap-8" style={{ display: 'grid', gridTemplateColumns: `${SIDEBAR_WIDTH} 1fr`, gap: '2rem' }}>
           {/* Sidebar with Procedure Steps - Fixed with own scroll */}
           <div className="lg:h-[calc(100vh-120px)] lg:sticky lg:top-8 lg:overflow-y-auto">
             <ProcedureSidebar
@@ -629,20 +659,20 @@ export function TrainingDashboard() {
           <div className="space-y-8">
             
             {/* Angle Monitor and Current Session Stats - Side by side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
               {/* Angle Visual Indicator */}
               <Card className="border-none shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-slate-900">Current Angle</CardTitle>
+                  <CardTitle className="text-slate-900">Optimal angle range: <strong> 15° - 30°</strong></CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    <div className="flex justify-center items-center">
+                    {/* <div className="flex justify-center items-center">
                       <span className="text-slate-900 text-4xl">{data.length > 0 ? data[data.length - 1].angleP : 0}°</span>
-                    </div>
+                    </div> */}
                     
                     {/* Angle Slider with Gradient - Green zone centered */}
-                    <div className="relative h-12">
+                    <div className="relative h-4">
                       {/* Gradient background - green zone in middle */}
                       <div 
                         className="absolute inset-0 rounded-full"
@@ -651,26 +681,123 @@ export function TrainingDashboard() {
                         }}
                       />
                       
+                      
                       {/* Pointer */}
                       <div 
-                        className="absolute top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-900 rounded-full shadow-lg transition-all duration-300"
+                        className="absolute top-1/2 -translate-y-1/2 w-1 h-6 bg-slate-900 rounded-full shadow-lg transition-all duration-300"
                         style={{
                           left: `${getAnglePosition(data.length > 0 ? data[data.length - 1].angleR : 0)}%`,
                           transform: `translateX(-50%) translateY(-50%)`
                         }}
                       />
                     </div>
-                    
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                      <p className="text-emerald-700 text-center">
-                        Optimal angle range: 15° - 30°
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Current Session Stats */}
+              
+            {/* </div> */}
+
+            {/* Angle and Pressure Graph */}
+            <Card className="border-none shadow-lg">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-slate-900">Angle & Pressure</CardTitle>
+
+                  </div>
+                  <BarChart3 className="h-6 w-6 text-slate-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[400px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={data}
+                      margin={{
+                        top: 5,
+                        right: 80,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis
+                        dataKey="time"
+                        stroke="#64748b"
+                        domain={isPastInitialPeriod ? ['dataMin', 'dataMax'] : [0, 10]}
+                        label={{
+                          value: 'Time (s)',
+                          position: 'insideBottom',
+                          offset: -5,
+                          fill: '#64748b',
+                        }}
+                        type="number"
+                        tickCount={11}
+                      />
+                      {/* Left Y-axis for Angle (-90 to 90) */}
+                      {/* <YAxis
+                        yAxisId="left"
+                        stroke="#8b5cf6"
+                        domain={[-90, 90]}
+                        label={{
+                          value: 'Angle (°)',
+                          angle: -90,
+                          position: 'insideLeft',
+                          fill: '#8b5cf6',
+                        }}
+                      /> */}
+                      {/* Right Y-axis for Pressure (0 to 1) */}
+                      <YAxis
+                        yAxisId="left"
+                        stroke="#06b6d4"
+                        domain={[0, 3]}
+                        label={{
+                          value: 'Pressure',
+                          angle: -90,
+                          position: 'insideLeft',
+                          fill: '#06b6d4',
+                        }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                        }}
+                        labelStyle={{ color: '#1e293b' }}
+                      />
+                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                      {/* <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="angleP"
+                        stroke="#8b5cf6"
+                        strokeWidth={3}
+                        name="Angle (°)"
+                        dot={{ fill: '#8b5cf6', r: 4 }}
+                        activeDot={{ r: 6 }}
+                        isAnimationActive={false}
+                      /> */}
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="pressure"
+                        stroke="#06b6d4"
+                        strokeWidth={3}
+                        name="Pressure"
+                        dot={{ fill: '#06b6d4', r: 4 }}
+                        activeDot={{ r: 6 }}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Current Session Stats */}
               <Card className="border-none shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-slate-900">Current Session Stats</CardTitle>
@@ -712,109 +839,6 @@ export function TrainingDashboard() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Angle and Pressure Graph */}
-            <Card className="border-none shadow-lg">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-slate-900">Angle & Pressure</CardTitle>
-                    <p className="text-slate-600 mt-1">
-                      Real-time monitoring of training metrics
-                    </p>
-                  </div>
-                  <BarChart3 className="h-6 w-6 text-slate-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={data}
-                      margin={{
-                        top: 5,
-                        right: 80,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis
-                        dataKey="time"
-                        stroke="#64748b"
-                        domain={isPastInitialPeriod ? ['dataMin', 'dataMax'] : [0, 10]}
-                        label={{
-                          value: 'Time (s)',
-                          position: 'insideBottom',
-                          offset: -5,
-                          fill: '#64748b',
-                        }}
-                        type="number"
-                        tickCount={11}
-                      />
-                      {/* Left Y-axis for Angle (-90 to 90) */}
-                      <YAxis
-                        yAxisId="left"
-                        stroke="#8b5cf6"
-                        domain={[-90, 90]}
-                        label={{
-                          value: 'Angle (°)',
-                          angle: -90,
-                          position: 'insideLeft',
-                          fill: '#8b5cf6',
-                        }}
-                      />
-                      {/* Right Y-axis for Pressure (0 to 1) */}
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        stroke="#06b6d4"
-                        domain={[0, 3]}
-                        label={{
-                          value: 'Pressure',
-                          angle: 90,
-                          position: 'insideRight',
-                          fill: '#06b6d4',
-                        }}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                        }}
-                        labelStyle={{ color: '#1e293b' }}
-                      />
-                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="angleP"
-                        stroke="#8b5cf6"
-                        strokeWidth={3}
-                        name="Angle (°)"
-                        dot={{ fill: '#8b5cf6', r: 4 }}
-                        activeDot={{ r: 6 }}
-                        isAnimationActive={false}
-                      />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="pressure"
-                        stroke="#06b6d4"
-                        strokeWidth={3}
-                        name="Pressure"
-                        dot={{ fill: '#06b6d4', r: 4 }}
-                        activeDot={{ r: 6 }}
-                        isAnimationActive={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Serial Output */}
             <div>

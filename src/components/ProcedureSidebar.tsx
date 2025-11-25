@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { CheckCircle2, Circle, AlertCircle, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
@@ -150,6 +150,14 @@ export function ProcedureSidebar({
       return newSet;
     });
   };
+
+  // Automatically keep only the current step expanded. This ensures step 1
+  // starts open and when currentStep changes the previous step will close and
+  // the new one will open. No animations applied here — the collapse/open is
+  // immediate and controlled by the parent `currentStep` value.
+  useEffect(() => {
+    setExpandedSteps(new Set([currentStep]));
+  }, [currentStep]);
 
   const getStepStatus = (stepId: number) => {
     if (failedSteps.has(stepId)) return 'failed';
