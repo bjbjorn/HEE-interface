@@ -659,9 +659,9 @@ export function TrainingDashboard() {
           <div className="space-y-8">
             
             {/* Angle Monitor and Current Session Stats - Side by side */}
-            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {/* Angle Visual Indicator */}
-              <Card className="border-none shadow-lg">
+              <Card className="md:col-span-3 border-none shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-slate-900">Optimal angle range: <strong> 15° - 30°</strong></CardTitle>
                 </CardHeader>
@@ -695,15 +695,41 @@ export function TrainingDashboard() {
                 </CardContent>
               </Card>
 
-              
-            {/* </div> */}
+              {/* Vein Detection Indicator */}
+              <Card className="border-none shadow-lg md:col-span-1">
+                <CardContent> 
+                  <div className={`mt-4 p-4 rounded-lg border-2 transition-all ${
+                    data.length > 0 && data[data.length - 1].vein === 1
+                      ? 'bg-emerald-50 border border-emerald-200 rounded-lg p-3'
+                      : 'bg-slate-50 border-slate-200'
+                    }`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`h-3 w-3 rounded-full ${
+                        data.length > 0 && data[data.length - 1].vein === 1
+                          ? 'bg-red-600 animate-pulse'
+                          : 'bg-slate-300'
+                      }`} />
+                      <span className={`font-bold ${
+                        data.length > 0 && data[data.length - 1].vein === 1
+                          ? 'text-slate-900 flex-shrink-0'
+                          : 'text-slate-600'
+                      }`}>
+                        Vein {data.length > 0 && data[data.length - 1].vein === 1 ? '● TOUCHING' : '○ Not Touching . . .'}
+                      </span>
+                    </div>
+                  </div>
+
+                </CardContent>
+              </Card>
+
+              </div>
 
             {/* Angle and Pressure Graph */}
             <Card className="border-none shadow-lg">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-slate-900">Angle & Pressure</CardTitle>
+                    <CardTitle className="text-slate-900">Pressure</CardTitle>
 
                   </div>
                   <BarChart3 className="h-6 w-6 text-slate-400" />
@@ -816,27 +842,7 @@ export function TrainingDashboard() {
                     <span className="text-slate-900">{pressureMin} - {pressureMax} mmHg</span>
                   </div>
                   
-                  {/* Vein Detection Indicator */}
-                  <div className={`mt-4 p-4 rounded-lg border-2 transition-all ${
-                    data.length > 0 && data[data.length - 1].vein === 1
-                      ? 'bg-emerald-50 border border-emerald-200 rounded-lg p-3'
-                      : 'bg-slate-50 border-slate-200'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`h-3 w-3 rounded-full ${
-                        data.length > 0 && data[data.length - 1].vein === 1
-                          ? 'bg-red-600 animate-pulse'
-                          : 'bg-slate-300'
-                      }`} />
-                      <span className={`font-bold ${
-                        data.length > 0 && data[data.length - 1].vein === 1
-                          ? 'text-slate-900 flex-shrink-0'
-                          : 'text-slate-600'
-                      }`}>
-                        Vein {data.length > 0 && data[data.length - 1].vein === 1 ? '● TOUCHING' : '○ Not Touching . . .'}
-                      </span>
-                    </div>
-                  </div>
+                  
                 </CardContent>
               </Card>
 

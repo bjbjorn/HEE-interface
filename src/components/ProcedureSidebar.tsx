@@ -272,12 +272,12 @@ export function ProcedureSidebar({
                       </span>
                       {step.id === 3 && (
                         <span className="text-emerald-600">
-                          (Press START)
+                          (Press START after completing all steps)
                         </span>
                       )}
                       {step.id === 4 && (
                         <span className="text-red-600">
-                          (Press STOP)
+                          (After the needle insertion)
                         </span>
                       )}
                       {skippedSteps.has(step.id) && (
