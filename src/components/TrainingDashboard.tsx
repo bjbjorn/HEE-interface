@@ -61,7 +61,7 @@ export function TrainingDashboard() {
   const readerRef = useRef<any>(null);
   const [serialLines, setSerialLines] = useState<string[]>([]);
   const bufferRef = useRef<string>(''); // holds partial line between chunks
-  const MAX_SERIAL_LINES = 500;
+  const MAX_SERIAL_LINES = 100;
   const serialContainerRef = useRef<HTMLDivElement | null>(null);
 
 
@@ -88,7 +88,9 @@ export function TrainingDashboard() {
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break; // stream closed
+        if (done) {
+          break; // stream closed
+        }
         if (value) {
           // value is a Uint8Array
           const chunk = decoder.decode(value, { stream: true });
@@ -99,9 +101,18 @@ export function TrainingDashboard() {
           if (completeLines.length > 0) {
             setSerialLines(prev => {
               const next = [...prev, ...completeLines];
-              if (next.length > MAX_SERIAL_LINES) return next.slice(-MAX_SERIAL_LINES);
+              if (next.length > MAX_SERIAL_LINES) {
+                const removed = next.length - MAX_SERIAL_LINES;
+                const sliced = next.slice(-MAX_SERIAL_LINES);
+                // Adjust the processed index so it remains relative to the trimmed buffer.
+                // If we removed earlier (old) items then subtract the removed count
+                // from lastSerialIndexRef so it still points at the correct next item.
+                lastSerialIndexRef.current = Math.max(0, lastSerialIndexRef.current - removed);
+                return sliced;
+              }
               return next;
             });
+            // debug: track how many complete lines we've collected
           }
         }
       }
@@ -143,14 +154,20 @@ export function TrainingDashboard() {
       let next = [...prev];
       for (let i = lastSerialIndexRef.current; i < serialLines.length; i++) {
         const line = serialLines[i];
-        // Parse format: "angle:56.53 pressure:80.38"
+        // Parse format: "angleR:56.53 pressure:80.38 angleP:23.45 vein:1"
         const m = line.match(
           /angleR:\s*([0-9.+-]+)\s+pressure:\s*([0-9.+-]+)\s+angleP:\s*([0-9.+-]+)\s+vein:\s*([01])/i
         );        if (!m) continue;
-        const angleR = parseFloat(m[1]);
-        const pressure = parseFloat(m[2]);
-        const angleP = parseFloat(m[3]);
-        const vein = parseInt(m[4], 10);
+        // Parse values defensively and validate
+        const angleR = Number(m[1]);
+        const pressure = Number(m[2]);
+        const angleP = Number(m[3]);
+        const vein = Number(m[4]);
+
+        // Skip malformed lines instead of letting invalid values propagate
+        if (!Number.isFinite(angleR) || !Number.isFinite(pressure) || !Number.isFinite(angleP) || (vein !== 0 && vein !== 1)) {
+          continue;
+        }
         if (startTimeRef.current === null) startTimeRef.current = Date.now();
         const currentTime = (Date.now() - (startTimeRef.current as number)) / 1000;
         latestTime = Math.max(latestTime, currentTime);
@@ -159,6 +176,7 @@ export function TrainingDashboard() {
       }
       lastSerialIndexRef.current = serialLines.length;
       if (!anyNew) return prev;
+      // report that we appended new plot points
       // Cap to WINDOW_SIZE points (rolling 10-second window)
       if (next.length > WINDOW_SIZE) next = next.slice(-WINDOW_SIZE);
       return next;
@@ -167,6 +185,10 @@ export function TrainingDashboard() {
     if (startTimeRef.current !== null) {
       const simulatedNow = (Date.now() - (startTimeRef.current as number)) / 1000;
       if (simulatedNow > 10 && !isPastInitialPeriod) setIsPastInitialPeriod(true);
+      // occasional check to track wall clock progress (every 10s)
+      if (Math.floor(simulatedNow) % 10 === 0) {
+        /* noop: previously logged session clock for debugging */
+      }
     }
   }, [serialLines]);
 
@@ -304,10 +326,15 @@ export function TrainingDashboard() {
   };
 
   // Calculate angle and pressure ranges from data
-  const angleMin = Math.min(...data.map(d => d.angleP)).toFixed(1);
-  const angleMax = Math.max(...data.map(d => d.angleP)).toFixed(1);
-  const pressureMin = Math.min(...data.map(d => d.pressure)).toFixed(1);
-  const pressureMax = Math.max(...data.map(d => d.pressure)).toFixed(1);
+  // Safely compute min/max values — guard against empty data or invalid numbers
+  const safeNumberMap = (arr: number[]) => arr.filter(Number.isFinite);
+  const anglePValues = safeNumberMap(data.map(d => d.angleP));
+  const pressureValues = safeNumberMap(data.map(d => d.pressure));
+
+  const angleMin = anglePValues.length > 0 ? Math.min(...anglePValues).toFixed(1) : '—';
+  const angleMax = anglePValues.length > 0 ? Math.max(...anglePValues).toFixed(1) : '—';
+  const pressureMin = pressureValues.length > 0 ? Math.min(...pressureValues).toFixed(1) : '—';
+  const pressureMax = pressureValues.length > 0 ? Math.max(...pressureValues).toFixed(1) : '—';
 
   // Calculate angle position for slider - green zone always centered
   const getAnglePosition = (angle: number) => {
@@ -659,9 +686,9 @@ export function TrainingDashboard() {
           <div className="space-y-8">
             
             {/* Angle Monitor and Current Session Stats - Side by side */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
               {/* Angle Visual Indicator */}
-              <Card className="md:col-span-3 border-none shadow-lg">
+              <Card className="border-none shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-slate-900">Optimal angle range: <strong> 15° - 30°</strong></CardTitle>
                 </CardHeader>
@@ -695,8 +722,8 @@ export function TrainingDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Vein Detection Indicator */}
-              <Card className="border-none shadow-lg md:col-span-1">
+              {/* Vein Detection Indicator
+              <Card className="border-none shadow-lg">
                 <CardContent> 
                   <div className={`mt-4 p-4 rounded-lg border-2 transition-all ${
                     data.length > 0 && data[data.length - 1].vein === 1
@@ -720,9 +747,9 @@ export function TrainingDashboard() {
                   </div>
 
                 </CardContent>
-              </Card>
+              </Card> */}
 
-              </div>
+              {/* </div> */}
 
             {/* Angle and Pressure Graph */}
             <Card className="border-none shadow-lg">
@@ -732,7 +759,9 @@ export function TrainingDashboard() {
                     <CardTitle className="text-slate-900">Pressure</CardTitle>
 
                   </div>
-                  <BarChart3 className="h-6 w-6 text-slate-400" />
+                  Vein {data.length > 0 && data[data.length - 1].vein === 1 ? '● TOUCHING' : '○ Not Touching . . .'}
+
+                  {/* <BarChart3 className="h-6 w-6 text-slate-400" /> */}
                 </div>
               </CardHeader>
               <CardContent>
