@@ -39,11 +39,12 @@ const LEGEND_WRAPPER_STYLE = {
   paddingTop: '0px',
 };
 
-const ANGLE_DOT_STYLE = { fill: '#8b5cf6', r: 4 };
-const ANGLE_ACTIVE_DOT_STYLE = { r: 6 };
+// Use smaller dots so the graph looks cleaner (less visual clutter at high sample rates)
+const ANGLE_DOT_STYLE = { fill: '#8b5cf6', r: 2 };
+const ANGLE_ACTIVE_DOT_STYLE = { r: 4 };
 
-const PRESSURE_DOT_STYLE = { fill: '#06b6d4', r: 4 };
-const PRESSURE_ACTIVE_DOT_STYLE = { r: 6 };
+const PRESSURE_DOT_STYLE = { fill: '#06b6d4', r: 2 };
+const PRESSURE_ACTIVE_DOT_STYLE = { r: 4 };
 
 export function TrainingDashboard() {
   const [currentAngle, setCurrentAngle] = useState(22.5); // Mock angle for visualization
@@ -303,6 +304,28 @@ export function TrainingDashboard() {
     }
   };
 
+  const handleStepBack = (stepId: number) => {
+    // Move back one step (but not below 1). Also undo any completion/failed/skipped
+    // marks for the step we're returning to so the action buttons are visible again.
+    const targetStep = Math.max(1, stepId - 1);
+    setCompletedSteps(prev => {
+      const s = new Set(prev);
+      s.delete(targetStep);
+      return s;
+    });
+    setFailedSteps(prev => {
+      const s = new Set(prev);
+      s.delete(targetStep);
+      return s;
+    });
+    setSkippedSteps(prev => {
+      const s = new Set(prev);
+      s.delete(targetStep);
+      return s;
+    });
+    setCurrentStep(targetStep);
+  };
+
   const handleReset = () => {
     setCurrentStep(1);
     setCompletedSteps(new Set());
@@ -404,7 +427,7 @@ export function TrainingDashboard() {
                         : 'bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white shadow-cyan-300/40'
                       }`}
                   >
-                    Connect Serial
+                    Connect Device
                   </button> button.
                 </li>
                 <li>  ➤ Select your device from the list that appears.</li>
@@ -634,7 +657,7 @@ export function TrainingDashboard() {
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200
                 ${serialConnected ? 'bg-gray-200 text-slate-600 cursor-not-allowed' : 'bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white shadow-cyan-300/40'}`}
             >
-              Connect Serial
+              Connect Device
             </button>
 
             <button
@@ -668,13 +691,14 @@ export function TrainingDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8" style={{ display: 'grid', gridTemplateColumns: `${SIDEBAR_WIDTH} 1fr`, gap: '2rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Sidebar with Procedure Steps - Fixed with own scroll */}
           <div className="lg:h-[calc(100vh-120px)] lg:sticky lg:top-8 lg:overflow-y-auto">
             <ProcedureSidebar
               onStepComplete={handleStepComplete}
               onStepSkipped={handleStepSkipped}
               onStepFailed={handleStepFailed}
+              onStepBack={handleStepBack}
               currentStep={currentStep}
               completedSteps={completedSteps}
               skippedSteps={skippedSteps}
@@ -842,8 +866,8 @@ export function TrainingDashboard() {
                         stroke="#06b6d4"
                         strokeWidth={3}
                         name="Pressure"
-                        dot={{ fill: '#06b6d4', r: 4 }}
-                        activeDot={{ r: 6 }}
+                        dot={PRESSURE_DOT_STYLE}
+                        activeDot={PRESSURE_ACTIVE_DOT_STYLE}
                         isAnimationActive={false}
                       />
                     </LineChart>

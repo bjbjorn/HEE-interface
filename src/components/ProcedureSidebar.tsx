@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from './ui/card';
-import { CheckCircle2, Circle, AlertCircle, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Circle, AlertCircle, X, Check, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 
@@ -109,6 +109,7 @@ interface ProcedureSidebarProps {
   onStepComplete: (stepId: number) => void;
   onStepSkipped: (stepId: number) => void;
   onStepFailed: (stepId: number) => void;
+  onStepBack: (stepId: number) => void;
   currentStep: number;
   completedSteps: Set<number>;
   skippedSteps: Set<number>;
@@ -119,6 +120,7 @@ export function ProcedureSidebar({
   onStepComplete,
   onStepSkipped,
   onStepFailed,
+  onStepBack,
   currentStep,
   completedSteps,
   skippedSteps,
@@ -335,20 +337,22 @@ export function ProcedureSidebar({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                      style={{ flex: 4 }}
+                      className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
                       onClick={() => onStepComplete(step.id)}
                     >
                       <Check className="h-4 w-4 mr-1" />
-                      Complete
+                      Continue
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
-                      onClick={() => onStepFailed(step.id)}
+                      style={{ flex: 1 }}
+                      className="border-slate-300 text-slate-700 hover:bg-slate-100"
+                      onClick={() => onStepBack(step.id)}
                     >
-                      <X className="h-4 w-4 mr-1" />
-                      Failed
+                      <ArrowLeft className="h-4 w-4 mr-1" />
+                      Back
                     </Button>
                   </div>
                 )}
