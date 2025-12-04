@@ -3,6 +3,7 @@ import { Card } from './ui/card';
 import { CheckCircle2, Circle, AlertCircle, X, Check, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
+import { Switch } from './ui/switch';
 
 interface SubStep {
   id: string;
@@ -12,7 +13,6 @@ interface SubStep {
 interface Step {
   id: number;
   title: string;
-  description: string[];
   subSteps: SubStep[];
 }
 
@@ -20,13 +20,6 @@ const PROCEDURE_STEPS: Step[] = [
   {
     id: 1,
     title: 'Patient Preparation and Identification',
-    description: [
-      'Professional attire (clean clothes, no jewellery, short nails)',
-      'Check patient file and present yourself, talk to patient',
-      'Disinfect hands with alcohol gel or water and soap',
-      'Disinfect work surface',
-      'Gather materials: needle, holder, tubes, disinfectants, gloves, tourniquets, sharp container',
-    ],
     subSteps: [
       { id: '1-a', label: 'Professional attire (clothes, no jewellery, nails)' },
       { id: '1-b', label: 'Check patient file and present yourself, talk to patient' },
@@ -38,12 +31,6 @@ const PROCEDURE_STEPS: Step[] = [
   {
     id: 2,
     title: 'Site Preparation',
-    description: [
-      'Disinfect hands with alcohol gel or water and soap. Put on non-sterile gloves',
-      'Disinfect puncture site, leave at least 15 seconds',
-      'Apply the tourniquet max 1 minute 10cm above puncture place, stimulate pumping by patient to select puncture site',
-      'Prepare needle & tubes',
-    ],
     subSteps: [
       { id: '2-a', label: 'Disinfect hands with alcohol gel or water and soap. Put on non-sterile gloves' },
       { id: '2-b', label: 'Disinfect puncture site, leave at least 15 seconds' },
@@ -54,31 +41,16 @@ const PROCEDURE_STEPS: Step[] = [
   {
     id: 3,
     title: 'Needle Insertion',
-    description: [
-      'Fixate the arm with non-dominant hand, thumb below puncture site',
-      'Let the patient make a fist',
-      'Press START to begin monitoring',
-      'Insert needle at angle of 15-30°',
-    ],
     subSteps: [
       { id: '3-a', label: 'Fixate the arm with non-dominant hand, thumb below puncture site' },
       { id: '3-b', label: 'Let the patient make a fist' },
-      { id: '3-c', label: 'Press START to begin monitoring' },
-      { id: '3-d', label: 'Insert needle at angle of 15-30°' },
+      { id: '3-c', label: 'Insert needle at angle of 15-30°' },
+      { id: '3-d', label: 'Press START to begin monitoring' },
     ],
   },
   {
     id: 4,
     title: 'Blood Collection',
-    description: [
-      'Insert tube & collect blood',
-      'Follow correct collection order',
-      'Release tourniquet',
-      'Remove needle safely and dispose into a needle container',
-      'Press STOP to end monitoring',
-      'Apply post-puncture pressure for 3-5min with clean gauze',
-      'Label tubes in a correct way',
-    ],
     subSteps: [
       { id: '4-a', label: 'Insert tube & collect' },
       { id: '4-b', label: 'Follow collection order' },
@@ -92,11 +64,6 @@ const PROCEDURE_STEPS: Step[] = [
   {
     id: 5,
     title: 'Aftercare',
-    description: [
-      'Dispose materials and disinfect hands',
-      'Position patient',
-      'Document all samples and bring to the blood collection centre',
-    ],
     subSteps: [
       { id: '5-a', label: 'Dispose materials and disinfect hands' },
       { id: '5-b', label: 'Position patient' },
@@ -114,6 +81,7 @@ interface ProcedureSidebarProps {
   completedSteps: Set<number>;
   skippedSteps: Set<number>;
   failedSteps: Set<number>;
+  sessionDuration: number;
 }
 
 export function ProcedureSidebar({
@@ -125,9 +93,12 @@ export function ProcedureSidebar({
   completedSteps,
   skippedSteps,
   failedSteps,
+  sessionDuration,
 }: ProcedureSidebarProps) {
   const [completedSubSteps, setCompletedSubSteps] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set([1]));
+  const [autoContiune, setAutoContiune] = useState(false);
+  const [countdownStartTime, setCountdownStartTime] = useState<number | null>(null);
 
   const handleSubStepToggle = (subStepId: string) => {
     setCompletedSubSteps(prev => {
@@ -152,6 +123,42 @@ export function ProcedureSidebar({
       return newSet;
     });
   };
+
+  // When auto-continue is enabled, start countdown on Complete instead of advancing immediately
+  const handleCompleteWithAutoCountdown = (stepId: number) => {
+    if (autoContiune) {
+      // Start the countdown by recording when it started
+      setCountdownStartTime(sessionDuration);
+    } else {
+      // No auto-continue, just complete immediately
+      onStepComplete(stepId);
+    }
+  };
+
+  // Calculate current countdown display based on sessionDuration
+  const countdownTimer = countdownStartTime !== null ? Math.max(0, 10 - (sessionDuration - countdownStartTime)) : 0;
+
+  // Auto-advance when countdown reaches 0
+  useEffect(() => {
+    if (countdownTimer === 0 && countdownStartTime !== null) {
+      // Countdown finished, auto-advance to next step
+      if (currentStep < 5) {
+        onStepComplete(currentStep);
+      }
+      setCountdownStartTime(null);
+    }
+  }, [countdownTimer, countdownStartTime, currentStep, onStepComplete]);
+
+  // Start/stop countdown when auto-continue toggle is pressed
+  useEffect(() => {
+    if (autoContiune && countdownStartTime === null) {
+      // Auto-continue enabled, start countdown
+      setCountdownStartTime(sessionDuration);
+    } else if (!autoContiune && countdownStartTime !== null) {
+      // Auto-continue disabled, stop countdown
+      setCountdownStartTime(null);
+    }
+  }, [autoContiune, sessionDuration]);
 
   // Automatically keep only the current step expanded. This ensures step 1
   // starts open and when currentStep changes the previous step will close and
@@ -225,9 +232,24 @@ export function ProcedureSidebar({
 
   return (
     <Card className="border-none shadow-lg p-4 h-fit">
-      {/* Header */}
-      <div className="mb-3">
+      {/* Header with Auto-Continue toggle */}
+      <div className="mb-3 flex items-center justify-between">
         <h2 className="text-slate-900">Procedure Steps</h2>
+        {countdownTimer > 0 && (<p className="text-sm text-slate-600">Auto-Continuing in {countdownTimer}s</p>
+          )}
+          {/* {countdownTimer > 0 && (
+          )} */}
+        <div className="flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={autoContiune}
+            onChange={(e) => setAutoContiune(e.target.checked)}
+            className="h-4 w-4"
+          />
+          Auto continue
+        </label>
+      </div>
       </div>
 
       <div className="flex gap-4">
@@ -338,8 +360,9 @@ export function ProcedureSidebar({
                       size="sm"
                       variant="outline"
                       style={{ flex: 4 }}
-                      className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-                      onClick={() => onStepComplete(step.id)}
+                      className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => handleCompleteWithAutoCountdown(step.id)}
+                      disabled={autoContiune}
                     >
                       <Check className="h-4 w-4 mr-1" />
                       Continue
