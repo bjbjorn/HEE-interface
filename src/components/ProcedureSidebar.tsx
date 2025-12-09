@@ -19,13 +19,12 @@ interface Step {
 const PROCEDURE_STEPS: Step[] = [
   {
     id: 1,
-    title: 'Patient Preparation and Identification',
+    title: 'Preparation',
     subSteps: [
-      { id: '1-a', label: 'Gather materials: needle, holder, tubes, disinfectants, gloves, tourniquets, sharp container' },
-      { id: '1-b', label: 'Check patient file and present yourself, talk to patient' },
-      { id: '1-c', label: 'Disinfect hands' },
-      { id: '1-d', label: 'Disinfect surface' },
-      { id: '1-e', label: 'Professional attire (clothes, no jewellery, nails)' },
+      { id: '1-a', label: 'Professional attire (clothes, no jewellery, nails)' },
+      { id: '1-b', label: 'Gather materials: needle, holder, tubes, disinfectants, gloves, tourniquets, sharp container' },
+      { id: '1-c', label: 'Check the phantom set-up and familiarize yourself with the scenario.' },
+      { id: '1-d', label: 'Disinfect your hands with 70% isopropanol and put on non-sterile gloves.' },
     ],
   },
   {
@@ -33,8 +32,8 @@ const PROCEDURE_STEPS: Step[] = [
     title: 'Site Preparation',
     subSteps: [
       { id: '2-a', label: 'Disinfect hands with alcohol gel or water and soap. Put on non-sterile gloves' },
-      { id: '2-b', label: 'Disinfect puncture site, leave at least 15 seconds' },
-      { id: '2-c', label: 'Apply the tourniquet max 1 minute 10cm above puncture place, stimulate "pumping" by patient to select puncture site' },
+      { id: '2-b', label: 'Disinfect the phantom puncture site and allow it to dry for at least 15 seconds.' },
+      { id: '2-c', label: 'Apply the tourniquet ~10 cm above the puncture site (max 1 min).' },
       { id: '2-d', label: 'Prepare needle & tubes' },
     ],
   },
@@ -42,32 +41,29 @@ const PROCEDURE_STEPS: Step[] = [
     id: 3,
     title: 'Needle Insertion',
     subSteps: [
-      { id: '3-a', label: 'Fixate the arm with non-dominant hand, thumb below puncture site' },
-      { id: '3-b', label: 'Let the patient make a fist' },
-      { id: '3-c', label: 'Insert needle at angle of 15-30°' },
-      { id: '3-d', label: 'Press START to begin monitoring' },
+      { id: '3-a', label: 'Stabilize the phantom model with non-dominant hand.' },
+      { id: '3-b', label: 'Press START and maintain correct angle' },
     ],
   },
   {
     id: 4,
     title: 'Blood Collection',
     subSteps: [
-      { id: '4-a', label: 'Insert tube & collect' },
-      { id: '4-b', label: 'Follow collection order' },
+      { id: '4-a', label: 'Insert needle at 15-30° into phantom vein (white light indicates contact, green indicates you are in the range)' },
+      { id: '4-b', label: 'Insert tubes and collect' },
       { id: '4-c', label: 'Release tourniquet' },
       { id: '4-d', label: 'Remove needle safely and dispose into a needle container' },
       { id: '4-e', label: 'Press STOP to end monitoring' },
-      { id: '4-f', label: 'Apply post-puncture pressure for 3-5min with clean gauze' },
-      { id: '4-g', label: 'Label tubes in a correct way' },
     ],
   },
   {
     id: 5,
     title: 'Aftercare',
     subSteps: [
-      { id: '5-a', label: 'Dispose materials and disinfect hands' },
-      { id: '5-b', label: 'Position patient' },
-      { id: '5-c', label: 'Document all samples and bring to the blood collection centre' },
+      { id: '5-a', label: 'Apply 3-5min post puncture pressure with gauze pad' },
+      { id: '5-b', label: 'Label tubes accordingly' },
+      { id: '5-c', label: 'Dispose materials and remove globes' },
+      { id: '5-d', label: 'Disinfect hands with alcohol gel or water and soap' },
     ],
   },
 ];
@@ -229,11 +225,11 @@ export function ProcedureSidebar({
           <label className="flex items-center gap-2 text-sm text-slate-700">
             Auto continue
             <select
-              value={autoContinueDuration ? autoContinueDuration : "None"}
+              value={autoContinueDuration ? autoContinueDuration : "No"}
               onChange={(e) => {
                 const value = e.target.value;
 
-                if (value === "None") {
+                if (value === "No") {
                   setAutoContinueDuration(null);
                   setCountdownStartTime(null);
                   return;
@@ -245,7 +241,7 @@ export function ProcedureSidebar({
               }}
               className="border rounded px-2 py-1 text-sm"
             >
-              <option value="None">None</option>
+              <option value="No">No</option>
               <option value="10">10s</option>
               <option value="20">20s</option>
               <option value="30">30s</option>
@@ -294,7 +290,7 @@ export function ProcedureSidebar({
                       <span className="text-slate-900 flex-shrink-0">
                         Step {step.id}
                       </span>
-                      {step.id === 3 && (
+                      {/* {step.id === 3 && (
                         <span className="text-emerald-600">
                           (Press START after completing all steps)
                         </span>
@@ -303,7 +299,7 @@ export function ProcedureSidebar({
                         <span className="text-red-600">
                           (After the needle insertion)
                         </span>
-                      )}
+                      )} */}
                       {skippedSteps.has(step.id) && (
                         <span className="text-orange-600">(Skipped)</span>
                       )}

@@ -65,6 +65,9 @@ export function TrainingDashboard() {
   const bufferRef = useRef<string>(''); // holds partial line between chunks
   const MAX_SERIAL_LINES = 100;
   const serialContainerRef = useRef<HTMLDivElement | null>(null);
+  const [averageAngle, setAverageAngle] = useState(0);
+  const [angleList, setAngleList] = useState<number[]>([]);
+
 
 
   // Check if all steps are completed
@@ -174,6 +177,18 @@ export function TrainingDashboard() {
         const currentTime = (Date.now() - (startTimeRef.current as number)) / 1000;
         latestTime = Math.max(latestTime, currentTime);
         anyNew = true;
+
+        if (vein === 1) {
+          setVeinTouched(true);
+        }
+
+        setAngleList(prev => {
+          const newList = [...prev, angleR];
+          const newAverage = newList.reduce((a, b) => a + b, 0) / newList.length;
+          setAverageAngle(newAverage);
+          return newList;
+        });
+
         next.push({ time: currentTime, angleR, pressure, angleP, vein });
       }
       lastSerialIndexRef.current = serialLines.length;
@@ -183,6 +198,7 @@ export function TrainingDashboard() {
       if (next.length > WINDOW_SIZE) next = next.slice(-WINDOW_SIZE);
       return next;
     });
+
 
     if (startTimeRef.current !== null) {
       const simulatedNow = (Date.now() - (startTimeRef.current as number)) / 1000;
@@ -247,6 +263,8 @@ export function TrainingDashboard() {
   const [performanceLevel, setPerformanceLevel] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
   const [sessionDuration, setSessionDuration] = useState(0);
+  const [veinTouched, setVeinTouched] = useState(false);
+  // const [performanceScore, setPerformanceScore] = useState(0);
   
   const averageScore = 0.0;
 
@@ -275,13 +293,13 @@ export function TrainingDashboard() {
   // Calculate performance level based on skipped and failed steps
   useEffect(() => {
     const baseScore = 0;
-    const penaltyPerSkip = 10;
-    const penaltyPerFail = 15;
-    const ScorePerCompletion = (100/5);
+    const ScorePerCompletion = 40 / 5;
+    const veinScore = veinTouched ? 20 : 0;
+    const angleScore = Math.max(0, 40 - Math.abs(22.5 - averageAngle)); // Max 40 points for perfect angle
     // const newScore = Math.max(0, baseScore + (completedSteps.size * penaltyPerSkip) + (completedSteps.size * penaltyPerFail));
-    const newScore = Math.round(baseScore + (completedSteps.size * ScorePerCompletion));
+    const newScore = Math.round(baseScore + (completedSteps.size * ScorePerCompletion) + veinScore + angleScore);
     setPerformanceLevel(newScore);
-  }, [completedSteps, failedSteps]);
+  }, [completedSteps, failedSteps, veinTouched, averageAngle]);
 
 
 
@@ -333,6 +351,8 @@ export function TrainingDashboard() {
     setSkippedSteps(new Set());
     setFailedSteps(new Set());
     setSessionDuration(0);
+    // Clear vein touched indicator when performing a reset
+    setVeinTouched(false);
     setShowReport(false);
   };
 
@@ -491,10 +511,18 @@ export function TrainingDashboard() {
           <ul className="list-disc list-inside text-slate-700 space-y-2">
             <li>Follow the Procedure Steps on the left to simulate a venipuncture session.</li>
             <li>Connect your device using the <strong>Connect Device</strong> button and press <strong>Start</strong> to begin streaming.</li>
-            <li>Watch the live Pressure graph and the Vein indicator to track insertion.</li>
+            <li>Watch the live angle and pressure graph and the Vein indicator LED to track insertion.</li>
           </ul>
           <div className="flex items-center justify-end mt-4 gap-3">
             <Button onClick={() => setShowStartup(false)}>Continue</Button>
+            {/* Help Button */}
+            <Button
+              onClick={() => {setShowHelp(true); setShowStartup(false);}}
+              className="flex items-center gap-2"
+            >
+              <HelpCircle className="h-6 w-6 text-violet-600" />
+              Help & Info
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -647,16 +675,6 @@ export function TrainingDashboard() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-slate-900 text-4xl">VeniSmart Training Kit</h1>
           <div className="flex gap-2 items-center">
-            {/* Repoet Button */}
-            {allStepsProcessed && (
-              <Button
-                onClick={() => setShowReport(true)}
-                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700"
-              >
-                <FileText className="h-4 w-4" />
-                View Report
-              </Button>
-            )}
             {/* Reset Button */}
             <Button
               onClick={resetSession}
@@ -704,20 +722,33 @@ export function TrainingDashboard() {
             <div className={`px-3 py-1 rounded-lg text-sm font-medium ${serialConnected ? '"border-none shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"' : 'bg-gray-100 text-slate-600'}`}>
               {serialConnected ? '● Connected' : 'Not connected'}
             </div>
-
-            <button
-            onClick={toggleRunning}
-            disabled={!serialConnected}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2
-              ${running 
-                ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white'
-                : 'bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white'
-              }`}
-          >
-            {running ? <Pause size={18} /> : <Play size={18} />}
-            {running ? 'Stop' : 'Start'}
-          </button>
+            {/* Start/Stop Button */}
+            {serialConnected && (
+              <button
+                onClick={toggleRunning}
+                disabled={!serialConnected}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2
+                  ${running 
+                    ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white'
+                    : 'bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white'
+                  }`}
+              >
+                {running ? <Pause size={18} /> : <Play size={18} />}
+                {running ? 'Stop' : 'Start'}
+              </button>
+            )}          
+            {/* Report Button */}
+            {allStepsProcessed && (
+              <Button
+                onClick={() => setShowReport(true)}
+                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700"
+              >
+                <FileText className="h-4 w-4" />
+                View Report
+              </Button>
+            )}
           </div>
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -738,9 +769,6 @@ export function TrainingDashboard() {
 
           {/* Main Content */}
           <div className="space-y-8 lg:h-[calc(100vh-120px)] lg:sticky lg:top-8 lg:overflow-y-auto">
-            
-            {/* Angle Monitor and Current Session Stats - Side by side */}
-            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> */}
               {/* Angle Visual Indicator */}
               <Card className="border-none shadow-lg">
                 <CardHeader>
@@ -748,10 +776,6 @@ export function TrainingDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {/* <div className="flex justify-center items-center">
-                      <span className="text-slate-900 text-4xl">{data.length > 0 ? data[data.length - 1].angleP : 0}°</span>
-                    </div> */}
-                    
                     {/* Angle Slider with Gradient - Green zone centered */}
                     <div className="relative h-4">
                       {/* Gradient background - green zone in middle */}
@@ -761,8 +785,6 @@ export function TrainingDashboard() {
                           background: 'linear-gradient(to right, #ef4444 0%, #eab308 35%, #22c55e 42.5%, #22c55e 57.5%, #eab308 65%, #ef4444 100%)'
                         }}
                       />
-                      
-                      
                       {/* Pointer */}
                       <div 
                         className="absolute top-1/2 -translate-y-1/2 w-1 h-6 bg-slate-900 rounded-full shadow-lg transition-all duration-300"
@@ -775,46 +797,14 @@ export function TrainingDashboard() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Vein Detection Indicator
-              <Card className="border-none shadow-lg">
-                <CardContent> 
-                  <div className={`mt-4 p-4 rounded-lg border-2 transition-all ${
-                    data.length > 0 && data[data.length - 1].vein === 1
-                      ? 'bg-emerald-50 border border-emerald-200 rounded-lg p-3'
-                      : 'bg-slate-50 border-slate-200'
-                    }`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`h-3 w-3 rounded-full ${
-                        data.length > 0 && data[data.length - 1].vein === 1
-                          ? 'bg-red-600 animate-pulse'
-                          : 'bg-slate-300'
-                      }`} />
-                      <span className={`font-bold ${
-                        data.length > 0 && data[data.length - 1].vein === 1
-                          ? 'text-slate-900 flex-shrink-0'
-                          : 'text-slate-600'
-                      }`}>
-                        Vein {data.length > 0 && data[data.length - 1].vein === 1 ? '● TOUCHING' : '○ Not Touching . . .'}
-                      </span>
-                    </div>
-                  </div>
-
-                </CardContent>
-              </Card> */}
-
-              {/* </div> */}
-
             {/* Angle and Pressure Graph */}
             <Card className="border-none shadow-lg">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-slate-900">Pressure</CardTitle>
-
                   </div>
                   Vein {data.length > 0 && data[data.length - 1].vein === 1 ? '● TOUCHING' : '○ Not Touching . . .'}
-
                   {/* <BarChart3 className="h-6 w-6 text-slate-400" /> */}
                 </div>
               </CardHeader>
@@ -844,18 +834,6 @@ export function TrainingDashboard() {
                         type="number"
                         tickCount={11}
                       />
-                      {/* Left Y-axis for Angle (-90 to 90) */}
-                      {/* <YAxis
-                        yAxisId="left"
-                        stroke="#8b5cf6"
-                        domain={[-90, 90]}
-                        label={{
-                          value: 'Angle (°)',
-                          angle: -90,
-                          position: 'insideLeft',
-                          fill: '#8b5cf6',
-                        }}
-                      /> */}
                       {/* Right Y-axis for Pressure (0 to 1) */}
                       <YAxis
                         yAxisId="left"
@@ -878,17 +856,7 @@ export function TrainingDashboard() {
                         labelStyle={{ color: '#1e293b' }}
                       />
                       <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                      {/* <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="angleP"
-                        stroke="#8b5cf6"
-                        strokeWidth={3}
-                        name="Angle (°)"
-                        dot={{ fill: '#8b5cf6', r: 4 }}
-                        activeDot={{ r: 6 }}
-                        isAnimationActive={false}
-                      /> */}
+
                       <Line
                         yAxisId="left"
                         type="monotone"
@@ -924,8 +892,6 @@ export function TrainingDashboard() {
                     <span className="text-slate-600">Pressure Range</span>
                     <span className="text-slate-900">{pressureMin} - {pressureMax} mmHg</span>
                   </div>
-                  
-                  
                 </CardContent>
               </Card>
 
@@ -968,7 +934,6 @@ export function TrainingDashboard() {
                 </CardContent>
               </Card>
             </div>
-
           </div>
         </div>
       </div>
