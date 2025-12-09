@@ -21,11 +21,11 @@ const PROCEDURE_STEPS: Step[] = [
     id: 1,
     title: 'Patient Preparation and Identification',
     subSteps: [
-      { id: '1-a', label: 'Professional attire (clothes, no jewellery, nails)' },
+      { id: '1-a', label: 'Gather materials: needle, holder, tubes, disinfectants, gloves, tourniquets, sharp container' },
       { id: '1-b', label: 'Check patient file and present yourself, talk to patient' },
       { id: '1-c', label: 'Disinfect hands' },
       { id: '1-d', label: 'Disinfect surface' },
-      { id: '1-e', label: 'Gather materials: needle, holder, tubes, disinfectants, gloves, tourniquets, sharp container' },
+      { id: '1-e', label: 'Professional attire (clothes, no jewellery, nails)' },
     ],
   },
   {
@@ -34,7 +34,7 @@ const PROCEDURE_STEPS: Step[] = [
     subSteps: [
       { id: '2-a', label: 'Disinfect hands with alcohol gel or water and soap. Put on non-sterile gloves' },
       { id: '2-b', label: 'Disinfect puncture site, leave at least 15 seconds' },
-      { id: '2-c', label: 'Apply the tourniquet max 1 minute 10cm above puncture place, stimulate \'pumping\' by patient to select puncture site' },
+      { id: '2-c', label: 'Apply the tourniquet max 1 minute 10cm above puncture place, stimulate "pumping" by patient to select puncture site' },
       { id: '2-d', label: 'Prepare needle & tubes' },
     ],
   },
@@ -97,17 +97,16 @@ export function ProcedureSidebar({
 }: ProcedureSidebarProps) {
   const [completedSubSteps, setCompletedSubSteps] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set([1]));
-  const [autoContiune, setAutoContiune] = useState(false);
+
+  // NEW: duration in seconds (10,20,30) or null for None
+  const [autoContinueDuration, setAutoContinueDuration] = useState<number | null>(null);
   const [countdownStartTime, setCountdownStartTime] = useState<number | null>(null);
 
   const handleSubStepToggle = (subStepId: string) => {
     setCompletedSubSteps(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(subStepId)) {
-        newSet.delete(subStepId);
-      } else {
-        newSet.add(subStepId);
-      }
+      if (newSet.has(subStepId)) newSet.delete(subStepId);
+      else newSet.add(subStepId);
       return newSet;
     });
   };
@@ -115,55 +114,43 @@ export function ProcedureSidebar({
   const toggleStepExpanded = (stepId: number) => {
     setExpandedSteps(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(stepId)) {
-        newSet.delete(stepId);
-      } else {
-        newSet.add(stepId);
-      }
+      if (newSet.has(stepId)) newSet.delete(stepId);
+      else newSet.add(stepId);
       return newSet;
     });
   };
 
-  // When auto-continue is enabled, start countdown on Complete instead of advancing immediately
-  const handleCompleteWithAutoCountdown = (stepId: number) => {
-    if (autoContiune) {
-      // Start the countdown by recording when it started
-      setCountdownStartTime(sessionDuration);
-    } else {
-      // No auto-continue, just complete immediately
-      onStepComplete(stepId);
-    }
-  };
+  // ✔️ UPDATED: Countdown uses selected auto-continue duration
+  const countdownTimer =
+    countdownStartTime !== null && autoContinueDuration
+      ? Math.max(0, autoContinueDuration - (sessionDuration - countdownStartTime))
+      : 0;
 
-  // Calculate current countdown display based on sessionDuration
-  const countdownTimer = countdownStartTime !== null ? Math.max(0, 10 - (sessionDuration - countdownStartTime)) : 0;
-
-  // Auto-advance when countdown reaches 0
+  // ✔️ If countdown reaches zero, auto advance
   useEffect(() => {
-    if (countdownTimer === 0 && countdownStartTime !== null) {
-      // Countdown finished, auto-advance to next step
+    if (
+      countdownStartTime !== null &&
+      autoContinueDuration &&
+      countdownTimer === 0
+    ) {
       if (currentStep < 5) {
         onStepComplete(currentStep);
       }
       setCountdownStartTime(null);
     }
-  }, [countdownTimer, countdownStartTime, currentStep, onStepComplete]);
+  }, [countdownTimer, countdownStartTime, autoContinueDuration, currentStep, onStepComplete]);
 
-  // Start/stop countdown when auto-continue toggle is pressed
+  // ✔️ Start countdown when selecting a duration, stop when selecting None
   useEffect(() => {
-    if (autoContiune && countdownStartTime === null) {
-      // Auto-continue enabled, start countdown
+    if (autoContinueDuration && countdownStartTime === null) {
       setCountdownStartTime(sessionDuration);
-    } else if (!autoContiune && countdownStartTime !== null) {
-      // Auto-continue disabled, stop countdown
+    }
+    if (!autoContinueDuration) {
       setCountdownStartTime(null);
     }
-  }, [autoContiune, sessionDuration]);
+  }, [autoContinueDuration, sessionDuration]);
 
-  // Automatically keep only the current step expanded. This ensures step 1
-  // starts open and when currentStep changes the previous step will close and
-  // the new one will open. No animations applied here — the collapse/open is
-  // immediate and controlled by the parent `currentStep` value.
+  // Expand only current step
   useEffect(() => {
     setExpandedSteps(new Set([currentStep]));
   }, [currentStep]);
@@ -196,64 +183,79 @@ export function ProcedureSidebar({
 
   const getStepStyles = (stepId: number) => {
     const status = getStepStatus(stepId);
-    const baseStyles = 'flex items-start gap-3 p-3 rounded-lg transition-all cursor-pointer hover:bg-opacity-80';
-    
+    const base = 'flex items-start gap-3 p-3 rounded-lg transition-all cursor-pointer hover:bg-opacity-80';
     switch (status) {
-      case 'completed':
-        return `${baseStyles} bg-emerald-50`;
-      case 'failed':
-        return `${baseStyles} bg-red-50`;
+      case 'completed': return `${base} bg-emerald-50`;
+      case 'failed': return `${base} bg-red-50`;
       case 'skipped':
-      case 'missed':
-        return `${baseStyles} bg-orange-50`;
-      case 'current':
-        return `${baseStyles} bg-violet-100 ring-2 ring-violet-400`;
-      default:
-        return `${baseStyles} bg-slate-50`;
+      case 'missed': return `${base} bg-orange-50`;
+      case 'current': return `${base} bg-violet-100 ring-2 ring-violet-400`;
+      default: return `${base} bg-slate-50`;
     }
   };
 
   const getConnectorColor = (stepId: number) => {
     const status = getStepStatus(stepId);
     switch (status) {
-      case 'completed':
-        return 'bg-emerald-500';
-      case 'failed':
-        return 'bg-red-500';
+      case 'completed': return 'bg-emerald-500';
+      case 'failed': return 'bg-red-500';
       case 'skipped':
-      case 'missed':
-        return 'bg-orange-500';
-      case 'current':
-        return 'bg-violet-500';
-      default:
-        return 'bg-slate-300';
+      case 'missed': return 'bg-orange-500';
+      case 'current': return 'bg-violet-500';
+      default: return 'bg-slate-300';
+    }
+  };
+
+  const handleCompleteWithAutoCountdown = (stepId: number) => {
+    if (autoContinueDuration) {
+      setCountdownStartTime(sessionDuration);
+    } else {
+      onStepComplete(stepId);
     }
   };
 
   return (
     <Card className="border-none shadow-lg p-4 h-fit">
-      {/* Header with Auto-Continue toggle */}
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-slate-900">Procedure Steps</h2>
-        {countdownTimer > 0 && (<p className="text-sm text-slate-600">Auto-Continuing in {countdownTimer}s</p>
-          )}
-          {/* {countdownTimer > 0 && (
-          )} */}
+
+        {countdownTimer > 0 && (
+          <p className="text-sm text-slate-600">
+            Auto-Continuing in {countdownTimer}s
+          </p>
+        )}
+
         <div className="flex items-center gap-2">
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={autoContiune}
-            onChange={(e) => setAutoContiune(e.target.checked)}
-            className="h-4 w-4"
-          />
-          Auto continue
-        </label>
-      </div>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            Auto continue
+            <select
+              value={autoContinueDuration ? autoContinueDuration : "None"}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (value === "None") {
+                  setAutoContinueDuration(null);
+                  setCountdownStartTime(null);
+                  return;
+                }
+
+                const seconds = Number(value);
+                setAutoContinueDuration(seconds);
+                setCountdownStartTime(sessionDuration);
+              }}
+              className="border rounded px-2 py-1 text-sm"
+            >
+              <option value="None">None</option>
+              <option value="10">10s</option>
+              <option value="20">20s</option>
+              <option value="30">30s</option>
+            </select>
+          </label>
+        </div>
       </div>
 
+      {/* --- Rest of your component remains identical --- */}
       <div className="flex gap-4">
-        {/* Vertical Progress bar */}
         <div className="flex flex-col items-center py-2">
           <div className="relative h-[400px] w-1.5 bg-slate-200 rounded-full">
             <div
@@ -266,21 +268,19 @@ export function ProcedureSidebar({
           </span>
         </div>
 
-        {/* Steps */}
         <div className="relative flex-1">
           {PROCEDURE_STEPS.map((step, index) => (
             <div key={step.id} className="relative">
-              {/* Vertical connector line */}
               {index < PROCEDURE_STEPS.length - 1 && (
                 <div className="absolute left-[21px] top-[50px] w-0.5 h-[calc(100%+8px)] bg-slate-200 z-0">
-                  {/* Progress fill based on next step status */}
-                  {(completedSteps.has(step.id + 1) || failedSteps.has(step.id + 1) || skippedSteps.has(step.id + 1)) && (
+                  {(completedSteps.has(step.id + 1) ||
+                    failedSteps.has(step.id + 1) ||
+                    skippedSteps.has(step.id + 1)) && (
                     <div className={`w-full h-full ${getConnectorColor(step.id + 1)}`} />
                   )}
                 </div>
               )}
 
-              {/* Step content */}
               <div className="relative z-10 mb-2">
                 <div
                   className={getStepStyles(step.id)}
@@ -305,14 +305,10 @@ export function ProcedureSidebar({
                         </span>
                       )}
                       {skippedSteps.has(step.id) && (
-                        <span className="text-orange-600">
-                          (Skipped)
-                        </span>
+                        <span className="text-orange-600">(Skipped)</span>
                       )}
                       {failedSteps.has(step.id) && (
-                        <span className="text-red-600">
-                          (Failed)
-                        </span>
+                        <span className="text-red-600">(Failed)</span>
                       )}
                     </div>
                     <p className="text-slate-700 break-words">
@@ -328,7 +324,6 @@ export function ProcedureSidebar({
                   </div>
                 </div>
 
-                {/* Sub-steps */}
                 {expandedSteps.has(step.id) && (
                   <div className="ml-9 mt-2 space-y-1.5 mb-2">
                     {step.subSteps.map((subStep) => (
@@ -353,32 +348,33 @@ export function ProcedureSidebar({
                   </div>
                 )}
 
-                {/* Action buttons for current step */}
-                {step.id === currentStep && !completedSteps.has(step.id) && !failedSteps.has(step.id) && (
-                  <div className="ml-9 mt-2 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      style={{ flex: 4 }}
-                      className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      onClick={() => handleCompleteWithAutoCountdown(step.id)}
-                      disabled={autoContiune}
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Continue
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      style={{ flex: 1 }}
-                      className="border-slate-300 text-slate-700 hover:bg-slate-100"
-                      onClick={() => onStepBack(step.id)}
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-1" />
-                      Back
-                    </Button>
-                  </div>
-                )}
+                {step.id === currentStep &&
+                  !completedSteps.has(step.id) &&
+                  !failedSteps.has(step.id) && (
+                    <div className="ml-9 mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        style={{ flex: 4 }}
+                        className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleCompleteWithAutoCountdown(step.id)}
+                        disabled={!!autoContinueDuration}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Continue
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        style={{ flex: 1 }}
+                        className="border-slate-300 text-slate-700 hover:bg-slate-100"
+                        onClick={() => onStepBack(step.id)}
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Back
+                      </Button>
+                    </div>
+                  )}
               </div>
             </div>
           ))}

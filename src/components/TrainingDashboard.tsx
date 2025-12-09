@@ -50,6 +50,7 @@ export function TrainingDashboard() {
   const [currentAngle, setCurrentAngle] = useState(22.5); // Mock angle for visualization
   const [showReport, setShowReport] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [showStartup, setShowStartup] = useState(true);
   const [userName] = useState('Dr. Smith'); // Mock user name
 
   
@@ -456,7 +457,7 @@ export function TrainingDashboard() {
           <div>
             <h3 className="text-slate-900 font-semibold text-lg mb-2"><strong>Session Controls</strong></h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
-              <li><strong>Start/Pause:</strong> Begin recording data or pause the session without resetting.</li>
+              <li><strong>Start/Stop:</strong> Begin recording data or pause the session without resetting.</li>
               <li><strong>Reset:</strong> Clear all data and restart from step 1.</li>
               <li><strong>View Report:</strong> Once all steps are completed, view your performance summary.</li>
             </div>
@@ -470,6 +471,30 @@ export function TrainingDashboard() {
               <li><strong>Purpose:</strong> A medical training device designed to help medical students practice intravenous (IV) insertion techniques through real-time feedback and performance monitoring.</li>
               <li><strong>Credits:</strong> Developed by Bas, Bjorn, Brent and Giofka for the HEE (Health Engineering Expierience) course, by KU Leuven.</li>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Startup intro modal shown on first load
+  const StartupScreen = () => (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-2xl mx-auto p-6">
+        <CardHeader className="flex items-start justify-between pb-2">
+          <div>
+            <CardTitle className="text-slate-900 text-xl">Welcome to VeniSmart</CardTitle>
+            <p className="text-slate-600 mt-1">A quick introduction to get you started</p>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ul className="list-disc list-inside text-slate-700 space-y-2">
+            <li>Follow the Procedure Steps on the left to simulate a venipuncture session.</li>
+            <li>Connect your device using the <strong>Connect Device</strong> button and press <strong>Start</strong> to begin streaming.</li>
+            <li>Watch the live Pressure graph and the Vein indicator to track insertion.</li>
+          </ul>
+          <div className="flex items-center justify-end mt-4 gap-3">
+            <Button onClick={() => setShowStartup(false)}>Continue</Button>
           </div>
         </CardContent>
       </Card>
@@ -610,6 +635,10 @@ export function TrainingDashboard() {
     return <HelpModal />;
   }
 
+  if (showStartup) {
+    return <StartupScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
       {/* {showHelp && <HelpModal />} */}
@@ -686,7 +715,7 @@ export function TrainingDashboard() {
               }`}
           >
             {running ? <Pause size={18} /> : <Play size={18} />}
-            {running ? 'Pause' : 'Start'}
+            {running ? 'Stop' : 'Start'}
           </button>
           </div>
         </div>
