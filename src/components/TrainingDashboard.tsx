@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Activity, BarChart3, TrendingUp, Target, RotateCcw, FileText, User, Play, Pause, HelpCircle, X, Italic } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, use } from 'react';
 import { ProcedureSidebar } from './ProcedureSidebar';
 
 // Web Serial API hook
@@ -67,6 +67,8 @@ export function TrainingDashboard() {
   const serialContainerRef = useRef<HTMLDivElement | null>(null);
   const [averageAngle, setAverageAngle] = useState(0);
   const [angleList, setAngleList] = useState<number[]>([]);
+  const [timeAfterCompletion, setTimeAfterCompletion] = useState(0);
+  
 
 
 
@@ -241,6 +243,8 @@ export function TrainingDashboard() {
     setCompletedSteps(new Set());
     setSkippedSteps(new Set());
     setFailedSteps(new Set());
+    setSessionCount(sessionCount + 1);
+    setSessionDuration(0);
   };
 
   // Clear serial buffer and displayed lines
@@ -275,6 +279,11 @@ export function TrainingDashboard() {
   // Check if all steps have been processed (completed or failed)
   const allStepsProcessed = (completedSteps.size + failedSteps.size) === 5;
 
+useEffect(() => {
+    if (allStepsProcessed) {
+      setTimeAfterCompletion(sessionDuration);
+    }
+  }, [allStepsProcessed]);
 
 
   // Increment session count on mount
@@ -451,7 +460,7 @@ export function TrainingDashboard() {
                     Connect Device
                   </button> button.
                 </li>
-                <li>  ➤ Select your device from the list that appears.</li>
+                <li>  ➤ Select the VeniSmart device from the list that appears.</li>
                 <li>  ➤ Wait for the connection indicator to show <strong>"● Connected"</strong></li>
               </ol>
             </div>
@@ -462,13 +471,14 @@ export function TrainingDashboard() {
             <h3 className="text-slate-900 font-semibold text-lg mb-2"><strong>How does the Interface work?</strong></h3>
             <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-slate-700">
               <p>
-                Once connected, the interface will guide you through training steps:
+                Once connected, the interface will guide you through the training steps:
               </p>
               <ol>
                 <li>➤ <strong>Procedure Sidebar:</strong> Follow the numbered steps on the left. Click to complete or failed.</li>
                 <li>➤ <strong>Real-time Monitoring:</strong> Watch the angle and pressure graphs update in real-time as you practice.</li>
-                <li>➤ <strong>Vein insertion:</strong> When the vein has been pierced, an LED indicator will light up.</li>
+                <li>➤ <strong>Vein Insertion:</strong> When the vein has been pierced, an LED indicator will light up.</li>
                 <li>➤ <strong>Session Stats:</strong> Track your duration, angle range, and pressure readings throughout the session.</li>
+                <li>➤ <strong>LEDs:</strong>The white LED on indicates that the vein has been pierced successfully, the others indicate the correct angle range (green=good)</li>
               </ol>
             </div>
           </div>
@@ -514,7 +524,12 @@ export function TrainingDashboard() {
             <li>Watch the live angle and pressure graph and the Vein indicator LED to track insertion.</li>
           </ul>
           <div className="flex items-center justify-end mt-4 gap-3">
-            <Button onClick={() => setShowStartup(false)}>Continue</Button>
+            <Button 
+              onClick={() => setShowStartup(false)}
+              className="bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white shadow-cyan-300/40"
+            >
+                Continue
+            </Button>
             {/* Help Button */}
             <Button
               onClick={() => {setShowHelp(true); setShowStartup(false);}}
@@ -591,7 +606,7 @@ export function TrainingDashboard() {
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-white">{averageScore}%</span>
+                      <span className="text-white">{performanceLevel}%</span>
                     </div>
                     <p className="text-white/80">+0.0% from last month</p>
                   </div>
@@ -608,7 +623,7 @@ export function TrainingDashboard() {
                       <span className="text-white">{sessionCount}</span>
                       <span className="text-white/70">sessions</span>
                     </div>
-                    <p className="text-white/80">This month</p>
+                    <p className="text-white/80">Today</p>
                   </div>
                 </div>
               </div>
@@ -640,7 +655,7 @@ export function TrainingDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                     <span className="text-slate-600">Duration</span>
-                    <span className="text-slate-900">{formatDuration(sessionDuration)}</span>
+                    <span className="text-slate-900">{formatDuration(timeAfterCompletion)}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                     <span className="text-slate-600">Angle Range</span>
